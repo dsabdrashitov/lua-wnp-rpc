@@ -5,8 +5,6 @@ local types = require("types")
 
 OutputPipe.__index = OutputPipe
 
-local switches = {}
-
 function OutputPipe:_setClass(obj)
     setmetatable(obj, self)
 end
@@ -25,8 +23,10 @@ function OutputPipe:_init(fileHandle)
     self.dwPointer = lwp.ByteBlock_alloc(lwp.SIZEOF_DWORD)
 end
 
+local type_switch
+
 function OutputPipe:write(obj)
-    switches.type = switches.type or {
+    type_switch = type_switch or {
         ["string"] = OutputPipe._writeString,
         ["boolean"] = OutputPipe._writeBoolean,
         ["nil"] = OutputPipe._writeNil,
@@ -34,7 +34,7 @@ function OutputPipe:write(obj)
         ["function"] = OutputPipe._writeFunction,
         ["table"] = OutputPipe._writeTable,
     }
-    local write_method = switches.type[type(obj)]
+    local write_method = type_switch[type(obj)]
     assert(write_method, string.format("error: unsupported type (%s)", type(obj)))
     return write_method(self, obj)
 end
