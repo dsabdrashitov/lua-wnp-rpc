@@ -14,8 +14,6 @@ package.path = prev_path
 FILE_NAME = "tmp\\file.txt"
 
 function main()
-    local ret
-
     local hFile = lwp.CreateFile(
             FILE_NAME,
             lwp.mask(lwp.GENERIC_WRITE),
@@ -35,7 +33,15 @@ function main()
 
     local out = wnprpc.OutputPipe:new(hFile)
 
-    out:write({["hello"] = 0, [true] = false, [255] = 256, [32768] = 65536, z = 2147483648 * 2147483648})
+    print(out:write("s"))
+    print(out:write("some long text zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz\nzzzzzzzzzzzzzzzzzzzzzzz"))
+    print(out:write([[some very long text:
+xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+    ]]))
+    --print(out:write({["hello"] = 0, [true] = false, [255] = 256, [32768] = 65536, z = 2147483648 * 2147483648}))
 
     print("Closing.")
     close(hFile)
