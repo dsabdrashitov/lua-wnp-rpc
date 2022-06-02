@@ -51,6 +51,20 @@ function OutputPipe:_writeString(str)
     return result
 end
 
+function OutputPipe:_writeBoolean(val)
+    local boolMask
+    if val then
+        boolMask = types.MASK_BOOL_TRUE
+    else
+        boolMask = types.MASK_BOOL_FALSE
+    end
+    local header = string.char(types.composeType(types.CLASS_BOOLEAN, boolMask))
+
+    local result = true
+    result = result and self:_writeRaw(header)
+    return result
+end
+
 function OutputPipe:_writeRaw(str)
     local len = string.len(str)
     if (self.bufferSize < len) then

@@ -34,7 +34,11 @@ function main()
     local out = wnprpc.OutputPipe:new(hFile)
 
     print(out:write("s"))
-    print(out:write("some long text zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz\nzzzzzzzzzzzzzzzzzzzzzzz"))
+    print(out:_writeRaw("\n"))
+    print(out:write(true))
+    print(out:_writeRaw("\n"))
+    print(out:write(false))
+    print(out:_writeRaw("\n"))
     print(out:write([[some very long text:
 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
