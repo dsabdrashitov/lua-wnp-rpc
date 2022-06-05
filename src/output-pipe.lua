@@ -31,7 +31,6 @@ function OutputPipe:write(obj)
         ["boolean"] = OutputPipe._writeBoolean,
         ["nil"] = OutputPipe._writeNil,
         ["number"] = OutputPipe._writeNumber,
-        ["function"] = OutputPipe._writeFunction,
         ["table"] = OutputPipe._writeTable,
     }
     local write_method = type_switch[type(obj)]

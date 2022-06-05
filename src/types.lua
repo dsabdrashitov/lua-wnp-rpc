@@ -18,6 +18,7 @@ types.CLASS_INT = 2
 types.CLASS_FLOAT = 3
 types.CLASS_STRING = 4
 types.CLASS_TABLE = 5
+types.CLASS_LINK = 6 -- class for predefined objects, registered functions and already sent objects
 
 function types.intMask(value)
     assert(math.type(value) == "integer", "value is not integer")
