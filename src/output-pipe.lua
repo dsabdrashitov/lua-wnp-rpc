@@ -64,6 +64,14 @@ function OutputPipe:_writeBoolean(val)
     return result
 end
 
+function OutputPipe:_writeNil()
+    local header = string.char(types.composeType(types.CLASS_VOID, 0))
+
+    local result = true
+    result = result and self:_writeRaw(header)
+    return result
+end
+
 function OutputPipe:_writeRaw(str)
     local len = string.len(str)
     if (self.bufferSize < len) then

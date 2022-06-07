@@ -39,6 +39,8 @@ function main()
     print(out:_writeRaw("\n"))
     print(out:write(false))
     print(out:_writeRaw("\n"))
+    print(out:write(nil))
+    print(out:_writeRaw("\n"))
     print(out:write([[some very long text:
 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
