@@ -41,8 +41,8 @@ end
 function OutputPipe:_writeString(str)
     local len = string.len(str)
     local intMask = types.intMask(len)
-    local strType = types.composeType(types.CLASS_STRING, intMask)
-    local header = string.char(strType) .. types.serializeInt(len, intMask)
+    local objType = types.composeType(types.CLASS_STRING, intMask)
+    local header = string.char(objType) .. types.serializeInt(len, intMask)
 
     local result = true
     result = result and self:_writeRaw(header)
@@ -66,6 +66,33 @@ end
 
 function OutputPipe:_writeNil()
     local header = string.char(types.composeType(types.CLASS_VOID, 0))
+
+    local result = true
+    result = result and self:_writeRaw(header)
+    return result
+end
+
+function OutputPipe:_writeNumber(number)
+    if math.type(number) == "integer" then
+        return self:_writeInt(number)
+    else
+        return self:_writeDouble(number)
+    end
+end
+
+function OutputPipe:_writeInt(number)
+    local intMask = types.intMask(number)
+    local objType = types.composeType(types.CLASS_INT, intMask)
+    local header = string.char(objType) .. types.serializeInt(number, intMask)
+
+    local result = true
+    result = result and self:_writeRaw(header)
+    return result
+end
+
+function OutputPipe:_writeDouble(number)
+    local objType = types.composeType(types.CLASS_FLOAT, types.MASK_FLOAT64)
+    local header = string.char(objType) .. types.serializeFloat(number, types.MASK_FLOAT64)
 
     local result = true
     result = result and self:_writeRaw(header)

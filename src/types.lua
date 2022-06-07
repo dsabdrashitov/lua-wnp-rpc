@@ -9,8 +9,11 @@ types.MASK_INT8 = 0
 types.MASK_INT16 = 1
 types.MASK_INT32 = 2
 types.MASK_INT64 = 3
+types.MASK_FLOAT32 = types.MASK_INT32
+types.MASK_FLOAT64 = types.MASK_INT64
 types.MASK_BOOL_FALSE = 0
 types.MASK_BOOL_TRUE = 1
+types.MASK_VOID = 0
 
 types.CLASS_VOID = 0
 types.CLASS_BOOLEAN = 1
@@ -55,12 +58,20 @@ end
 
 -- little-endian
 function types.serializeInt(value, mask)
-    local buf = {}
-    for _ = 1, (1 << mask) do
-        buf[(#buf) + 1] = string.char(value & 255)
-        value = value >> 8
+    local bytes = 1 << mask
+    return string.pack("<i" .. bytes .. "", value)
+end
+
+function types.serializeFloat(value, mask)
+    mask = mask or types.MASK_FLOAT64
+
+    if mask == types.MASK_FLOAT64 then
+        return string.pack("<d", value)
+    elseif mask == types.MASK_FLOAT32 then
+        return string.pack("<f", value)
+    else
+        error("invalid mask")
     end
-    return table.concat(buf)
 end
 
 -- little-endian
