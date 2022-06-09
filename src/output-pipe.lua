@@ -94,7 +94,8 @@ function OutputPipe:_writeTable(table)
         result = result and self:write(v)
         done = done + 1
     end
-    return result and (done == size)
+    assert(done == size, "table has variable size")
+    return result
 end
 
 function OutputPipe:_writeInt(number)
