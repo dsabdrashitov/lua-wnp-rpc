@@ -80,6 +80,23 @@ function OutputPipe:_writeNumber(number)
     end
 end
 
+function OutputPipe:_writeTable(table)
+    local size = OutputPipe._tableSize(table)
+    local intMask = types.intMask(size)
+    local objType = types.composeType(types.CLASS_TABLE, intMask)
+    local header = string.char(objType) .. types.serializeInt(size, intMask)
+
+    local result = true
+    result = result and self:_writeRaw(header)
+    local done = 0
+    for k, v in pairs(table) do
+        result = result and self:write(k)
+        result = result and self:write(v)
+        done = done + 1
+    end
+    return result and (done == size)
+end
+
 function OutputPipe:_writeInt(number)
     local intMask = types.intMask(number)
     local objType = types.composeType(types.CLASS_INT, intMask)
@@ -118,6 +135,14 @@ function OutputPipe:_writeRaw(str)
         done = done + lwp.ByteBlock_getDWORD(self.dwPointer)
     end
     return true
+end
+
+function OutputPipe._tableSize(table)
+    local size = 0
+    for _ in pairs(table) do
+        size = size + 1
+    end
+    return size
 end
 
 return OutputPipe

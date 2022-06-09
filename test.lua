@@ -33,18 +33,15 @@ function main()
 
     local out = wnprpc.OutputPipe:new(hFile)
 
-    print(out:_writeRaw("s:\n"))
-    print(out:write("s"))
-    print(out:_writeRaw("\n127:\n"))
-    print(out:write(127))
-    print(out:_writeRaw("\n-256:\n"))
-    print(out:write(-256))
-    print(out:_writeRaw("\n-256.0:\n"))
-    print(out:write(-256 * 1.0))
-    print(out:_writeRaw("\ntrue:\n"))
-    print(out:write(true))
-    print(out:_writeRaw("\nfalse:\n"))
-    print(out:write(false))
+    local obj = {
+        ["127:"] = 127,
+        ["256:"] = 256,
+        ["256.0:"] = 256 * 1.0,
+        [true] = false,
+        [1] = true,
+        ["obj"] = {["a"] = "a", ["b"] = "b"}
+    }
+    print(out:write(obj))
     print(out:_writeRaw("\nnil:\n"))
     print(out:write(nil))
     print(out:_writeRaw("\n"))
@@ -54,7 +51,6 @@ xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
     ]]))
-    --print(out:write({["hello"] = 0, [true] = false, [255] = 256, [32768] = 65536, z = 2147483648 * 2147483648}))
 
     print("Closing.")
     close(hFile)
