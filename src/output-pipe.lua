@@ -124,6 +124,7 @@ function OutputPipe:_writeRaw(str)
         end
         self.buffer = lwp.ByteBlock_alloc(self.bufferSize)
     end
+    lwp.ByteBlock_setOffset(self.buffer, 0)
     lwp.ByteBlock_setString(self.buffer, str)
     local done = 0
     while done < len do
