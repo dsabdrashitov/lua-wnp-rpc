@@ -14,18 +14,28 @@ package.path = prev_path
 FILE_NAME = "tmp\\file.txt"
 
 function main()
+    --obj_print(create_test_table())
     test_write()
     test_read()
 end
 
 function create_test_table()
-    local result = {
+    local obj1 = {
+        name = "obj1",
         ["127:"] = 127,
-        ["256:"] = 256,
+    }
+    local obj2 = {
+        name = "obj2",
+        ["65536:"] = 65536,
+    }
+    obj1["link"] = obj2
+    obj2["link"] = obj1
+
+    local result = {
         ["256.0:"] = 256 * 1.0,
         [true] = false,
         [1] = true,
-        ["obj"] = {["a"] = "a", ["b"] = "b"}
+        link = obj1,
     }
     return result
 end
@@ -90,7 +100,7 @@ function test_read()
     close(hFile)
 end
 
-function obj_equals(obj1, obj2)
+function obj_equals(obj1, obj2, traversed1, traversed2)
     if obj1 == obj2 then
         return true
     end
@@ -100,10 +110,17 @@ function obj_equals(obj1, obj2)
     if type(obj2) ~= "table" then
         return false
     end
+    traversed1 = traversed1 or {}
+    traversed2 = traversed2 or {}
+    if traversed1[obj1] then
+        return traversed1[obj1] == traversed2[obj2]
+    end
+    traversed1[obj1] = obj1
+    traversed2[obj2] = obj1
     local compared = {}
     for key1, val1 in pairs(obj1) do
         local val2 = obj2[key1]
-        if not obj_equals(val1, val2) then
+        if not obj_equals(val1, val2, traversed1, traversed2) then
             return false
         end
         compared[key1] = true
@@ -116,14 +133,20 @@ function obj_equals(obj1, obj2)
     return true
 end
 
-function obj_print(obj, indent)
+function obj_print(obj, indent, printed)
     indent = indent or ""
+    printed = printed or {}
     if type(obj) == "table" then
+        if printed[obj] then
+            print(indent .. tostring(obj) .. " <printed>")
+            return
+        end
+        printed[obj] = true
         print(indent .. tostring(obj) .. " {")
         for key, val in pairs(obj) do
-            obj_print(key, indent .. "  ")
+            obj_print(key, indent .. "  ", printed)
             print(indent .. "  ||")
-            obj_print(val, indent .. "  ")
+            obj_print(val, indent .. "  ", printed)
             print(indent .. "  ,")
         end
         print(indent .. "}")

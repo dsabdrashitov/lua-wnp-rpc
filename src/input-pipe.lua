@@ -26,6 +26,10 @@ end
 local class_switch
 
 function InputPipe:read()
+    return self:_read({count = 0})
+end
+
+function InputPipe:_read(stored_objects)
     local ok, r = self:_readRaw(1)
     if not ok then
         return false
@@ -40,10 +44,11 @@ function InputPipe:read()
         [types.CLASS_FLOAT] = InputPipe._readFloat,
         [types.CLASS_STRING] = InputPipe._readString,
         [types.CLASS_TABLE] = InputPipe._readTable,
+        [types.CLASS_LINK] = InputPipe._readLink,
     }
     local read_method = class_switch[objClass]
     assert(read_method, string.format("error: unsupported class (%d)", objClass))
-    return read_method(self, objMask)
+    return read_method(self, objMask, stored_objects)
 end
 
 function InputPipe:_readString(mask)
@@ -78,7 +83,7 @@ function InputPipe:_readNil(mask)
     return false
 end
 
-function InputPipe:_readTable(mask)
+function InputPipe:_readTable(mask, stored_objects)
     local ok
     local size
     ok, size = self:_readInt(mask)
@@ -86,20 +91,32 @@ function InputPipe:_readTable(mask)
         return false
     end
     local result = {}
+    stored_objects[stored_objects.count] = result
+    stored_objects.count = stored_objects.count + 1
     for _ = 1, size do
         local key
-        ok, key = self:read()
+        ok, key = self:_read(stored_objects)
         if not ok then
             return false
         end
         local val
-        ok, val = self:read()
+        ok, val = self:_read(stored_objects)
         if not ok then
             return false
         end
         result[key] = val
     end
     return true, result
+end
+
+function InputPipe:_readLink(mask, stored_objects)
+    local ok
+    local link_id
+    ok, link_id = self:_readInt(mask)
+    if not ok then
+        return false
+    end
+    return true, stored_objects[link_id]
 end
 
 function InputPipe:_readInt(mask)
