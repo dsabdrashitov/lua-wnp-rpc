@@ -26,6 +26,10 @@ end
 local type_switch
 
 function OutputPipe:write(obj)
+    return self:_write(obj, {count = 0})
+end
+
+function OutputPipe:_write(obj, stored_objects)
     type_switch = type_switch or {
         ["string"] = OutputPipe._writeString,
         ["boolean"] = OutputPipe._writeBoolean,
@@ -35,7 +39,7 @@ function OutputPipe:write(obj)
     }
     local write_method = type_switch[type(obj)]
     assert(write_method, string.format("error: unsupported type (%s)", type(obj)))
-    return write_method(self, obj)
+    return write_method(self, obj, stored_objects)
 end
 
 function OutputPipe:_writeString(str)
@@ -80,7 +84,13 @@ function OutputPipe:_writeNumber(number)
     end
 end
 
-function OutputPipe:_writeTable(table)
+function OutputPipe:_writeTable(table, stored_objects)
+    if stored_objects[table] then
+        return self:_writeLink(table, stored_objects)
+    end
+    stored_objects[table] = stored_objects.count
+    stored_objects.count = stored_objects.count + 1
+
     local size = OutputPipe._tableSize(table)
     local intMask = types.intMask(size)
     local objType = types.composeType(types.CLASS_TABLE, intMask)
@@ -90,11 +100,22 @@ function OutputPipe:_writeTable(table)
     result = result and self:_writeRaw(header)
     local done = 0
     for k, v in pairs(table) do
-        result = result and self:write(k)
-        result = result and self:write(v)
+        result = result and self:_write(k, stored_objects)
+        result = result and self:_write(v, stored_objects)
         done = done + 1
     end
     assert(done == size, "table has variable size")
+    return result
+end
+
+function OutputPipe:_writeLink(table, stored_objects)
+    local link_id = stored_objects[table]
+    local objMask = types.intMask(link_id)
+    local objType = types.composeType(types.CLASS_LINK, objMask)
+    local header = string.char(objType) .. types.serializeInt(link_id, objMask)
+
+    local result = true
+    result = result and self:_writeRaw(header)
     return result
 end
 
