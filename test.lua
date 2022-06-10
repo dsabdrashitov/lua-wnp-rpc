@@ -14,6 +14,11 @@ package.path = prev_path
 FILE_NAME = "tmp\\file.txt"
 
 function main()
+    test_write()
+    test_read()
+end
+
+function test_write()
     local hFile = lwp.CreateFile(
             FILE_NAME,
             lwp.mask(lwp.GENERIC_WRITE),
@@ -42,18 +47,61 @@ function main()
         ["obj"] = {["a"] = "a", ["b"] = "b"}
     }
     print(out:write(obj))
-    print(out:_writeRaw("\nnil:\n"))
     print(out:write(nil))
-    print(out:_writeRaw("\n"))
-    print(out:write([[some very long text:
-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-    ]]))
 
     print("Closing.")
     close(hFile)
+end
+
+function test_read()
+    local hFile = lwp.CreateFile(
+            FILE_NAME,
+            lwp.mask(lwp.GENERIC_READ),
+            lwp.FILE_NO_SHARE,
+            nil,
+            lwp.OPEN_EXISTING,
+            lwp.FILE_ATTRIBUTE_DEFAULT,
+            nil
+    )
+    if (hFile == lwp.INVALID_HANDLE_VALUE) then
+        print("Error: invalid handle")
+        print(tostring(lwp.GetLastError()))
+        return
+    else
+        print("Opened.")
+    end
+
+    local inp = wnprpc.InputPipe:new(hFile)
+
+    local ok, obj = inp:read()
+    print(ok)
+    rprint(obj)
+    ok, obj = inp:read()
+    print(ok)
+    rprint(obj)
+    --ok, obj = inp:read()
+    --rprint(ok, obj)
+
+    print("Closing.")
+    close(hFile)
+end
+
+function rprint(obj, indent)
+    indent = indent or ""
+    if type(obj) == "table" then
+        print(indent .. tostring(obj) .. " {")
+        for key, val in pairs(obj) do
+            rprint(key, indent .. "  ")
+            print(indent .. "  ||")
+            rprint(val, indent .. "  ")
+            print(indent .. "  ,")
+        end
+        print(indent .. "}")
+    elseif type(obj) == "string" then
+        print(indent .. "\"" .. obj .. "\"")
+    else
+        print(indent .. tostring(obj))
+    end
 end
 
 function close(handle)

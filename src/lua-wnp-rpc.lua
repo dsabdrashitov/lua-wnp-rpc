@@ -8,10 +8,12 @@ package.path = root_path .. "?.lua"
 -- imports and libs
 local lwp = require("lib.lua-win-pipe-v_1_1.lua-win-pipe")
 local OutputPipe = require("output-pipe")
+local InputPipe = require("input-pipe")
 
 -- Restore path
 package.path = prev_path
 
 lua_wnp_rpc.OutputPipe = OutputPipe
+lua_wnp_rpc.InputPipe = InputPipe
 
 return lua_wnp_rpc

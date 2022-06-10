@@ -40,6 +40,10 @@ function types.intMask(value)
     error("value range is too wide")
 end
 
+function types.maskBytes(mask)
+    return 1 << mask
+end
+
 function types.composeType(class, mask)
     assert(math.type(class) == "integer", "class is not integer")
     assert((0 <= class) and (class <= types.CLASS_MAX), "class out of range")
@@ -58,7 +62,7 @@ end
 
 -- little-endian
 function types.serializeInt(value, mask)
-    local bytes = 1 << mask
+    local bytes = types.maskBytes(mask)
     return string.pack("<i" .. bytes .. "", value)
 end
 
@@ -75,12 +79,24 @@ function types.serializeFloat(value, mask)
 end
 
 -- little-endian
-function types.deserializeInt(str)
+-- i don't use string.unpack here to check that my understanding of little-endian is consistent with string.pack
+function types.deserializeInt(str, mask)
+    local bytes = types.maskBytes(mask)
     local result = 0
-    for i = 1, string.len(str) do
+    for i = 1, bytes do
         result = result | (string.byte(str, i) << ((i - 1) * 8))
     end
     return result
+end
+
+function types.deserializeFloat(str, mask)
+    if mask == types.MASK_FLOAT64 then
+        return string.unpack("<d", str)
+    elseif mask == types.MASK_FLOAT32 then
+        return string.unpack("<f", str)
+    else
+        return nil
+    end
 end
 
 return types
