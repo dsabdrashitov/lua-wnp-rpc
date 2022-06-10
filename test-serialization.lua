@@ -18,6 +18,18 @@ function main()
     test_read()
 end
 
+function create_test_table()
+    local result = {
+        ["127:"] = 127,
+        ["256:"] = 256,
+        ["256.0:"] = 256 * 1.0,
+        [true] = false,
+        [1] = true,
+        ["obj"] = {["a"] = "a", ["b"] = "b"}
+    }
+    return result
+end
+
 function test_write()
     local hFile = lwp.CreateFile(
             FILE_NAME,
@@ -38,16 +50,9 @@ function test_write()
 
     local out = wnprpc.OutputPipe:new(hFile)
 
-    local obj = {
-        ["127:"] = 127,
-        ["256:"] = 256,
-        ["256.0:"] = 256 * 1.0,
-        [true] = false,
-        [1] = true,
-        ["obj"] = {["a"] = "a", ["b"] = "b"}
-    }
-    print(out:write(obj))
-    print(out:write(nil))
+    local obj = create_test_table()
+    print(assert(out:write(obj)))
+    print(assert(out:write(nil)))
 
     print("Closing.")
     close(hFile)
@@ -74,26 +79,51 @@ function test_read()
     local inp = wnprpc.InputPipe:new(hFile)
 
     local ok, obj = inp:read()
-    print(ok)
-    rprint(obj)
+    print(assert(ok))
+    local obj_expected = create_test_table()
+    assert(obj_equals(obj, obj_expected))
     ok, obj = inp:read()
-    print(ok)
-    rprint(obj)
-    --ok, obj = inp:read()
-    --rprint(ok, obj)
+    print(assert(ok))
+    assert(obj == nil)
 
     print("Closing.")
     close(hFile)
 end
 
-function rprint(obj, indent)
+function obj_equals(obj1, obj2)
+    if obj1 == obj2 then
+        return true
+    end
+    if type(obj1) ~= "table" then
+        return false
+    end
+    if type(obj2) ~= "table" then
+        return false
+    end
+    local compared = {}
+    for key1, val1 in pairs(obj1) do
+        local val2 = obj2[key1]
+        if not obj_equals(val1, val2) then
+            return false
+        end
+        compared[key1] = true
+    end
+    for key2 in pairs(obj2) do
+        if not compared[key2] then
+            return false
+        end
+    end
+    return true
+end
+
+function obj_print(obj, indent)
     indent = indent or ""
     if type(obj) == "table" then
         print(indent .. tostring(obj) .. " {")
         for key, val in pairs(obj) do
-            rprint(key, indent .. "  ")
+            obj_print(key, indent .. "  ")
             print(indent .. "  ||")
-            rprint(val, indent .. "  ")
+            obj_print(val, indent .. "  ")
             print(indent .. "  ,")
         end
         print(indent .. "}")
