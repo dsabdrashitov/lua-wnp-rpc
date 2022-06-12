@@ -47,7 +47,10 @@ function InputPipe:_read(stored_objects)
         [types.CLASS_LINK] = InputPipe._readLink,
     }
     local read_method = class_switch[objClass]
-    assert(read_method, string.format("error: unsupported class (%d)", objClass))
+    if not read_method then
+        print(string.format("error: unsupported class (%d)", objClass))
+        return false
+    end
     return read_method(self, objMask, stored_objects)
 end
 
