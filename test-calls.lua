@@ -14,11 +14,12 @@ FILE_FUNCIN = "tmp\\funcin.txt"
 FILE_FUNCOUT = "tmp\\funcout.txt"
 
 function main()
-    write_test()
+    write_calls()
     execute_test()
+    read_replies()
 end
 
-function write_test()
+function write_calls()
     local hFile = lwp.CreateFile(
             FILE_FUNCIN,
             lwp.mask(lwp.GENERIC_WRITE),
@@ -36,24 +37,12 @@ function write_test()
         print("Created.")
     end
 
-    local out = wnprpc.OutputPipe:new(hFile)
+    local outPipe = wnprpc.OutputPipe:new(hFile)
+    local out = wnprpc.OutgoingCalls:new(nil, outPipe)
 
-    print(assert(out:write(0)))
-    print(assert(out:write(3)))
-    print(assert(out:write(false)))
-    print(assert(out:write(nil)))
-    print(assert(out:write("error1")))
-
-    print(assert(out:write(0)))
-    print(assert(out:write(3)))
-    print(assert(out:write(false)))
-    print(assert(out:write("error2")))
-    print(assert(out:write(nil)))
-
-    print(assert(out:write(0)))
-    print(assert(out:write(2)))
-    print(assert(out:write(true)))
-    print(assert(out:write("error3")))
+    out:_sendCall(0, false, nil, "error1")
+    out:_sendCall(0, false, "error2", nil)
+    out:_sendCall(0, true, "error3", nil, "something")
 
     print("Closing.")
     close(hFile)
@@ -104,6 +93,36 @@ function execute_test()
     close(outFile)
 
     --print_output(assert((function() return true, "world"  end)(), "hello"))
+end
+
+function read_replies()
+    local inFile = lwp.CreateFile(
+            FILE_FUNCOUT,
+            lwp.mask(lwp.GENERIC_READ),
+            lwp.FILE_NO_SHARE,
+            nil,
+            lwp.OPEN_EXISTING,
+            lwp.FILE_ATTRIBUTE_DEFAULT,
+            nil
+    )
+    if (inFile == lwp.INVALID_HANDLE_VALUE) then
+        print("Error: invalid handle")
+        print(tostring(lwp.GetLastError()))
+        return
+    else
+        print("Opened.")
+    end
+
+    local inPipe = wnprpc.InputPipe:new(inFile)
+    local out = wnprpc.OutgoingCalls:new(inPipe, nil)
+
+    print_output(pcall(function() return out:_receiveReply() end))
+    --out:_receiveReply()
+    print_output(pcall(function() return out:_receiveReply() end))
+    print_output(pcall(function() return out:_receiveReply() end))
+
+    print("Closing.")
+    close(inFile)
 end
 
 function print_output(...)

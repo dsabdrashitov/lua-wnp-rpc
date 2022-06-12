@@ -82,11 +82,7 @@ end
 -- i don't use string.unpack here to check that my understanding of little-endian is consistent with string.pack
 function types.deserializeInt(str, mask)
     local bytes = types.maskBytes(mask)
-    local result = 0
-    for i = 1, bytes do
-        result = result | (string.byte(str, i) << ((i - 1) * 8))
-    end
-    return result
+    return string.unpack("<i" .. bytes .. "", str)
 end
 
 function types.deserializeFloat(str, mask)
