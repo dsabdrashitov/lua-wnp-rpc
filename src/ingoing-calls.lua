@@ -1,6 +1,6 @@
 local IngoingCalls = {}
 
--- no imports
+local utils = require("utils")
 
 IngoingCalls.__index = IngoingCalls
 
@@ -63,7 +63,7 @@ function IngoingCalls:receiveCall()
 end
 
 function IngoingCalls:_replyResult(result)
-    local retsCount = tonumber(self:_returnValuesCount(result))
+    local retsCount = utils.lastIndex(result) - 1
     local ok
     ok = self.outputPipe:write(retsCount)
     if not ok then
@@ -93,16 +93,6 @@ function IngoingCalls:_replyError(err)
         return false
     end
     return true
-end
-
-function IngoingCalls:_returnValuesCount(pcallResult)
-    local max = 1
-    for i, _ in pairs(pcallResult) do
-        if max < i then
-            max = i
-        end
-    end
-    return max - 1
 end
 
 return IngoingCalls
