@@ -1,6 +1,7 @@
 local IngoingCalls = {}
 
 local utils = require("utils")
+local errors = require("errors")
 
 IngoingCalls.__index = IngoingCalls
 
@@ -18,81 +19,46 @@ end
 function IngoingCalls:_init(inputPipe, outputPipe, rootFunction)
     self.inputPipe = inputPipe
     self.outputPipe = outputPipe
-    self.brokenPipes = false
     self.function2id = {[rootFunction] = 0}
     self.id2function = {[0] = rootFunction}
     self.registered = 1
 end
 
 function IngoingCalls:receiveCall()
-    if self.brokenPipes then
-        return false
-    end
-    local ok
-    local funcId
-    ok, funcId = self.inputPipe:read()
-    if not ok then
-        self.brokenPipes = true
-        return false
-    end
-    local argsCount
-    ok, argsCount = self.inputPipe:read()
-    if not ok then
-        self.brokenPipes = true
-        return false
-    end
+    local funcId = self.inputPipe:read()
+    local argsCount = self.inputPipe:read()
+    assert(type(argsCount) == "number", errors.ERROR_PROTOCOL)
     local args = {}
     for i = 1, argsCount do
-        ok, args[i] = self.inputPipe:read()
-        if not ok then
-            self.brokenPipes = true
-            return false
-        end
+        args[i] = self.inputPipe:read()
     end
+
     local func = self.id2function[funcId]
     if not func then
-        return self:_replyError(string.format("no function with id (%s)", tostring(funcId)))
+        self:_replyError(string.format("no function with id (%s)", tostring(funcId)))
+        return
     end
-    local result = {pcall(func, table.unpack(args, 1, argsCount))}
-    ok = result[1]
+    local pcallResult = {pcall(func, table.unpack(args, 1, argsCount))}
+    local ok = pcallResult[1]
     if not ok then
-        local err = result[2]
-        return self:_replyError(err)
+        local err = pcallResult[2]
+        self:_replyError(err)
+        return
     end
-    return self:_replyResult(result)
+    self:_replyResult(pcallResult)
 end
 
-function IngoingCalls:_replyResult(result)
-    local retsCount = utils.lastIndex(result) - 1
-    local ok
-    ok = self.outputPipe:write(retsCount)
-    if not ok then
-        self.brokenPipes = true
-        return false
-    end
+function IngoingCalls:_replyResult(pcallResult)
+    local retsCount = utils.lastIndex(pcallResult) - 1
+    self.outputPipe:write(retsCount)
     for i = 1, retsCount do
-        ok = self.outputPipe:write(result[i + 1])
-        if not ok then
-            self.brokenPipes = true
-            return false
-        end
+        self.outputPipe:write(pcallResult[i + 1])
     end
-    return true
 end
 
 function IngoingCalls:_replyError(err)
-    local ok
-    ok = self.outputPipe:write(-1)
-    if not ok then
-        self.brokenPipes = true
-        return false
-    end
-    ok = self.outputPipe:write(err)
-    if not ok then
-        self.brokenPipes = true
-        return false
-    end
-    return true
+    self.outputPipe:write(-1)
+    self.outputPipe:write(err)
 end
 
 return IngoingCalls

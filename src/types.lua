@@ -1,9 +1,12 @@
 local types = {}
 
+local errors = require("errors")
+
 types.MASK_BITS = 2
 types.MASK_MAX = (1 << types.MASK_BITS) - 1 -- equals 3
 types.CLASS_BITS = 6
 types.CLASS_MAX = (1 << types.CLASS_BITS) - 1 -- equals 63
+types.TYPE_MAX = (1 << (types.MASK_BITS + types.CLASS_BITS)) - 1
 
 types.MASK_INT8 = 0
 types.MASK_INT16 = 1
@@ -41,6 +44,8 @@ function types.intMask(value)
 end
 
 function types.maskBytes(mask)
+    assert(math.type(mask) == "integer", "mask is not integer")
+    assert((0 <= mask) and (mask <= types.MASK_MAX), errors.ERROR_PROTOCOL)
     return 1 << mask
 end
 
@@ -48,13 +53,13 @@ function types.composeType(class, mask)
     assert(math.type(class) == "integer", "class is not integer")
     assert((0 <= class) and (class <= types.CLASS_MAX), "class out of range")
     assert(math.type(mask) == "integer", "mask is not integer")
-    assert((0 <= mask) and (mask <= types.MASK_MAX), "unknown mask")
+    assert((0 <= mask) and (mask <= types.MASK_MAX), "mask out of range")
     return (class << types.MASK_BITS) | mask
 end
 
 function types.decomposeType(type)
     assert(math.type(type) == "integer", "type is not integer")
-    assert(type >= 0, "negative type")
+    assert((0 <= type) and (type <= types.TYPE_MAX), errors.ERROR_PROTOCOL)
     local class = type >> types.MASK_BITS
     local mask = type & types.MASK_MAX
     return class, mask
@@ -74,12 +79,11 @@ function types.serializeFloat(value, mask)
     elseif mask == types.MASK_FLOAT32 then
         return string.pack("<f", value)
     else
-        error("invalid mask")
+        error("unknown float type")
     end
 end
 
 -- little-endian
--- i don't use string.unpack here to check that my understanding of little-endian is consistent with string.pack
 function types.deserializeInt(str, mask)
     local bytes = types.maskBytes(mask)
     return string.unpack("<i" .. bytes .. "", str)
@@ -91,7 +95,7 @@ function types.deserializeFloat(str, mask)
     elseif mask == types.MASK_FLOAT32 then
         return string.unpack("<f", str)
     else
-        return nil
+        error(errors.ERROR_PROTOCOL)
     end
 end
 

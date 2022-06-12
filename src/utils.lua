@@ -11,4 +11,12 @@ function utils.lastIndex(array)
     return max
 end
 
+function utils.tableSize(table)
+    local size = 0
+    for _ in pairs(table) do
+        size = size + 1
+    end
+    return size
+end
+
 return utils

@@ -84,15 +84,13 @@ function execute_test()
     end
 
     local ingoing = wnprpc.IngoingCalls:new(wnprpc.InputPipe:new(inFile), wnprpc.OutputPipe:new(outFile), assert)
-    print(ingoing:receiveCall())
-    print(ingoing:receiveCall())
-    print(ingoing:receiveCall())
+    ingoing:receiveCall()
+    ingoing:receiveCall()
+    ingoing:receiveCall()
 
     print("Closing.")
     close(inFile)
     close(outFile)
-
-    --print_output(assert((function() return true, "world"  end)(), "hello"))
 end
 
 function read_replies()
@@ -117,7 +115,6 @@ function read_replies()
     local out = wnprpc.OutgoingCalls:new(inPipe, nil)
 
     print_output(pcall(function() return out:_receiveReply() end))
-    --out:_receiveReply()
     print_output(pcall(function() return out:_receiveReply() end))
     print_output(pcall(function() return out:_receiveReply() end))
 

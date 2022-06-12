@@ -61,8 +61,8 @@ function test_write()
     local out = wnprpc.OutputPipe:new(hFile)
 
     local obj = create_test_table()
-    print(assert(out:write(obj)))
-    print(assert(out:write(nil)))
+    out:write(obj)
+    out:write(nil)
 
     print("Closing.")
     close(hFile)
@@ -88,12 +88,10 @@ function test_read()
 
     local inp = wnprpc.InputPipe:new(hFile)
 
-    local ok, obj = inp:read()
-    print(assert(ok))
+    local obj = inp:read()
     local obj_expected = create_test_table()
     assert(obj_equals(obj, obj_expected))
-    ok, obj = inp:read()
-    print(assert(ok))
+    obj = inp:read()
     assert(obj == nil)
 
     print("Closing.")
