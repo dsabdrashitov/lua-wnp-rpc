@@ -9,11 +9,13 @@ package.path = root_path .. "?.lua"
 local lwp = require("lib.lua-win-pipe-v_1_1.lua-win-pipe")
 local OutputPipe = require("output-pipe")
 local InputPipe = require("input-pipe")
+local IngoingCalls = require("ingoing-calls")
 
 -- Restore path
 package.path = prev_path
 
 lua_wnp_rpc.OutputPipe = OutputPipe
 lua_wnp_rpc.InputPipe = InputPipe
+lua_wnp_rpc.IngoingCalls = IngoingCalls
 
 return lua_wnp_rpc
