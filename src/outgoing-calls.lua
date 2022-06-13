@@ -1,5 +1,6 @@
 local OutgoingCalls = {}
 
+local RemoteFunctions = require("remote-functions")
 local utils = require("utils")
 local errors = require("errors")
 
@@ -19,6 +20,11 @@ end
 function OutgoingCalls:_init(inputPipe, outputPipe)
     self.inputPipe = inputPipe
     self.outputPipe = outputPipe
+    self.remoteFunctions = RemoteFunctions:new(self)
+    -- just for testing purposes inputPipe can be nil
+    if self.inputPipe then
+        self.inputPipe:setRemoteFunctions(self.remoteFunctions)
+    end
 end
 
 function OutgoingCalls:setLocalFunctions(localFunctions)
@@ -30,6 +36,7 @@ function OutgoingCalls:rootCall()
 end
 
 function OutgoingCalls:_call(remoteId, ...)
+    --TODO: catch errors and report
     self:_sendCall(remoteId, ...)
     return self:_receiveReply()
 end

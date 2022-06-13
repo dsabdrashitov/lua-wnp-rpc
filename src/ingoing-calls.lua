@@ -24,6 +24,10 @@ function IngoingCalls:_init(inputPipe, outputPipe, rootFunction)
     self.outputPipe:setLocalFunctions(self.localFunctions)
 end
 
+function IngoingCalls:setRemoteFunctions(remoteFunctions)
+    self.inputPipe:setRemoteFunctions(remoteFunctions)
+end
+
 function IngoingCalls:receiveCall()
     local funcId = self.inputPipe:read()
     local argsCount = self.inputPipe:read()
