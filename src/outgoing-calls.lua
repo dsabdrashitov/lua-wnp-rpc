@@ -31,8 +31,8 @@ function OutgoingCalls:setLocalFunctions(localFunctions)
     self.outputPipe:setLocalFunctions(localFunctions)
 end
 
-function OutgoingCalls:rootCall()
-    return self:_call(0)
+function OutgoingCalls:rootCall(...)
+    return self:_call(0, ...)
 end
 
 function OutgoingCalls:_call(remoteId, ...)
