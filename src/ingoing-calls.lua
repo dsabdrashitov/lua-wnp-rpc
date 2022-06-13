@@ -1,5 +1,6 @@
 local IngoingCalls = {}
 
+local FunctionsMap = require("functions-map")
 local utils = require("utils")
 local errors = require("errors")
 
@@ -19,9 +20,7 @@ end
 function IngoingCalls:_init(inputPipe, outputPipe, rootFunction)
     self.inputPipe = inputPipe
     self.outputPipe = outputPipe
-    self.function2id = {[rootFunction] = 0}
-    self.id2function = {[0] = rootFunction}
-    self.registered = 1
+    self.fmap = FunctionsMap:new(rootFunction)
 end
 
 function IngoingCalls:receiveCall()
@@ -33,7 +32,7 @@ function IngoingCalls:receiveCall()
         args[i] = self.inputPipe:read()
     end
 
-    local func = self.id2function[funcId]
+    local func = self.fmap:getFunction(funcId)
     if not func then
         self:_replyError(string.format("no function with id (%s)", tostring(funcId)))
         return
