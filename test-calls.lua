@@ -20,7 +20,7 @@ function main()
 end
 
 function write_calls()
-    local hFile = lwp.CreateFile(
+    local outFile = lwp.CreateFile(
             FILE_FUNCIN,
             lwp.mask(lwp.GENERIC_WRITE),
             lwp.FILE_NO_SHARE,
@@ -29,7 +29,7 @@ function write_calls()
             lwp.FILE_ATTRIBUTE_DEFAULT,
             nil
     )
-    if (hFile == lwp.INVALID_HANDLE_VALUE) then
+    if (outFile == lwp.INVALID_HANDLE_VALUE) then
         print("Error: invalid handle")
         print(tostring(lwp.GetLastError()))
         return
@@ -37,15 +37,14 @@ function write_calls()
         print("Created.")
     end
 
-    local outPipe = wnprpc.OutputPipe:new(hFile)
-    local out = wnprpc.OutgoingCalls:new(nil, outPipe)
+    local out = wnprpc.OutgoingCalls:new(nil, outFile)
 
     out:_sendCall(0, false, nil, "error1")
     out:_sendCall(0, false, "error2", nil)
     out:_sendCall(0, true, "error3", nil, "something")
 
     print("Closing.")
-    close(hFile)
+    close(outFile)
 end
 
 function execute_test()
@@ -83,7 +82,7 @@ function execute_test()
         print("Opened.")
     end
 
-    local ingoing = wnprpc.IngoingCalls:new(wnprpc.InputPipe:new(inFile), wnprpc.OutputPipe:new(outFile), assert)
+    local ingoing = wnprpc.IngoingCalls:new(inFile, outFile, assert)
     ingoing:receiveCall()
     ingoing:receiveCall()
     ingoing:receiveCall()
@@ -111,8 +110,7 @@ function read_replies()
         print("Opened.")
     end
 
-    local inPipe = wnprpc.InputPipe:new(inFile)
-    local out = wnprpc.OutgoingCalls:new(inPipe, nil)
+    local out = wnprpc.OutgoingCalls:new(inFile, nil)
 
     print_output(pcall(function() return out:_receiveReply() end))
     print_output(pcall(function() return out:_receiveReply() end))

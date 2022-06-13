@@ -1,6 +1,8 @@
 local IngoingCalls = {}
 
 local LocalFunctions = require("local-functions")
+local InputPipe = require("input-pipe")
+local OutputPipe = require("output-pipe")
 local utils = require("utils")
 local errors = require("errors")
 
@@ -10,16 +12,16 @@ function IngoingCalls:_setClass(obj)
     setmetatable(obj, self)
 end
 
-function IngoingCalls:new(inputPipe, outputPipe, rootFunction)
+function IngoingCalls:new(inputHandle, outputHandle, rootFunction)
     local obj = {}
     self:_setClass(obj)
-    obj:_init(inputPipe, outputPipe, rootFunction)
+    obj:_init(inputHandle, outputHandle, rootFunction)
     return obj
 end
 
-function IngoingCalls:_init(inputPipe, outputPipe, rootFunction)
-    self.inputPipe = inputPipe
-    self.outputPipe = outputPipe
+function IngoingCalls:_init(inputHandle, outputHandle, rootFunction)
+    self.inputPipe = InputPipe:new(inputHandle)
+    self.outputPipe = OutputPipe:new(outputHandle)
     self.localFunctions = LocalFunctions:new(rootFunction)
     self.outputPipe:setLocalFunctions(self.localFunctions)
 end

@@ -1,6 +1,8 @@
 local OutgoingCalls = {}
 
 local RemoteFunctions = require("remote-functions")
+local InputPipe = require("input-pipe")
+local OutputPipe = require("output-pipe")
 local utils = require("utils")
 local errors = require("errors")
 
@@ -10,21 +12,18 @@ function OutgoingCalls:_setClass(obj)
     setmetatable(obj, self)
 end
 
-function OutgoingCalls:new(inputPipe, outputPipe)
+function OutgoingCalls:new(inputHandle, outputHandle)
     local obj = {}
     self:_setClass(obj)
-    obj:_init(inputPipe, outputPipe)
+    obj:_init(inputHandle, outputHandle)
     return obj
 end
 
-function OutgoingCalls:_init(inputPipe, outputPipe)
-    self.inputPipe = inputPipe
-    self.outputPipe = outputPipe
+function OutgoingCalls:_init(inputHandle, outputHandle)
+    self.inputPipe = InputPipe:new(inputHandle)
+    self.outputPipe = OutputPipe:new(outputHandle)
     self.remoteFunctions = RemoteFunctions:new(self)
-    -- just for testing purposes inputPipe can be nil
-    if self.inputPipe then
-        self.inputPipe:setRemoteFunctions(self.remoteFunctions)
-    end
+    self.inputPipe:setRemoteFunctions(self.remoteFunctions)
 end
 
 function OutgoingCalls:setLocalFunctions(localFunctions)
