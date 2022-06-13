@@ -2,6 +2,8 @@ local OutputPipe = {}
 
 local lwp = require("lib.lua-win-pipe-v_1_1.lua-win-pipe")
 local types = require("types")
+local errors = require("errors")
+local utils = require("utils")
 
 OutputPipe.__index = OutputPipe
 
@@ -23,11 +25,11 @@ function OutputPipe:_init(fileHandle)
     self.dwPointer = lwp.ByteBlock_alloc(lwp.SIZEOF_DWORD)
 end
 
-local type_switch
-
 function OutputPipe:write(obj)
-    return self:_write(obj, {count = 0})
+    self:_write(obj, {count = 0})
 end
+
+local type_switch
 
 function OutputPipe:_write(obj, stored_objects)
     type_switch = type_switch or {
@@ -39,73 +41,68 @@ function OutputPipe:_write(obj, stored_objects)
     }
     local write_method = type_switch[type(obj)]
     assert(write_method, string.format("error: unsupported type (%s)", type(obj)))
-    return write_method(self, obj, stored_objects)
+    write_method(self, obj, stored_objects)
 end
 
 function OutputPipe:_writeString(str)
     local len = string.len(str)
-    local intMask = types.intMask(len)
-    local objType = types.composeType(types.CLASS_STRING, intMask)
-    local header = string.char(objType) .. types.serializeInt(len, intMask)
+    local objMask = types.intMask(len)
+    local objType = types.composeType(types.CLASS_STRING, objMask)
+    local header = string.char(objType) .. types.serializeInt(len, objMask)
 
-    local result = true
-    result = result and self:_writeRaw(header)
-    result = result and self:_writeRaw(str)
-    return result
+    self:_writeRaw(header)
+    self:_writeRaw(str)
 end
 
 function OutputPipe:_writeBoolean(val)
-    local boolMask
+    local objMask
     if val then
-        boolMask = types.MASK_BOOL_TRUE
+        objMask = types.MASK_BOOL_TRUE
     else
-        boolMask = types.MASK_BOOL_FALSE
+        objMask = types.MASK_BOOL_FALSE
     end
-    local header = string.char(types.composeType(types.CLASS_BOOLEAN, boolMask))
+    local objType = types.composeType(types.CLASS_BOOLEAN, objMask)
+    local header = string.char(objType)
 
-    local result = true
-    result = result and self:_writeRaw(header)
-    return result
+    self:_writeRaw(header)
 end
 
 function OutputPipe:_writeNil()
-    local header = string.char(types.composeType(types.CLASS_VOID, 0))
+    local objType = types.composeType(types.CLASS_VOID, types.MASK_VOID)
+    local header = string.char(objType)
 
-    local result = true
-    result = result and self:_writeRaw(header)
-    return result
+    self:_writeRaw(header)
 end
 
 function OutputPipe:_writeNumber(number)
     if math.type(number) == "integer" then
-        return self:_writeInt(number)
+        self:_writeInt(number)
     else
-        return self:_writeDouble(number)
+        self:_writeDouble(number)
     end
 end
 
 function OutputPipe:_writeTable(table, stored_objects)
     if stored_objects[table] then
-        return self:_writeLink(table, stored_objects)
+        self:_writeLink(table, stored_objects)
+        return
     end
     stored_objects[table] = stored_objects.count
     stored_objects.count = stored_objects.count + 1
 
-    local size = OutputPipe._tableSize(table)
-    local intMask = types.intMask(size)
-    local objType = types.composeType(types.CLASS_TABLE, intMask)
-    local header = string.char(objType) .. types.serializeInt(size, intMask)
+    local size = utils.tableSize(table)
+    local objMask = types.intMask(size)
+    local objType = types.composeType(types.CLASS_TABLE, objMask)
+    local header = string.char(objType) .. types.serializeInt(size, objMask)
 
-    local result = true
-    result = result and self:_writeRaw(header)
+    self:_writeRaw(header)
     local done = 0
     for k, v in pairs(table) do
-        result = result and self:_write(k, stored_objects)
-        result = result and self:_write(v, stored_objects)
+        self:_write(k, stored_objects)
+        self:_write(v, stored_objects)
         done = done + 1
     end
-    assert(done == size, "table has variable size")
-    return result
+    assert(done == size, "table size changed")
 end
 
 function OutputPipe:_writeLink(table, stored_objects)
@@ -114,28 +111,22 @@ function OutputPipe:_writeLink(table, stored_objects)
     local objType = types.composeType(types.CLASS_LINK, objMask)
     local header = string.char(objType) .. types.serializeInt(link_id, objMask)
 
-    local result = true
-    result = result and self:_writeRaw(header)
-    return result
+    self:_writeRaw(header)
 end
 
 function OutputPipe:_writeInt(number)
-    local intMask = types.intMask(number)
-    local objType = types.composeType(types.CLASS_INT, intMask)
-    local header = string.char(objType) .. types.serializeInt(number, intMask)
+    local objMask = types.intMask(number)
+    local objType = types.composeType(types.CLASS_INT, objMask)
+    local header = string.char(objType) .. types.serializeInt(number, objMask)
 
-    local result = true
-    result = result and self:_writeRaw(header)
-    return result
+    self:_writeRaw(header)
 end
 
 function OutputPipe:_writeDouble(number)
     local objType = types.composeType(types.CLASS_FLOAT, types.MASK_FLOAT64)
     local header = string.char(objType) .. types.serializeFloat(number, types.MASK_FLOAT64)
 
-    local result = true
-    result = result and self:_writeRaw(header)
-    return result
+    self:_writeRaw(header)
 end
 
 function OutputPipe:_writeRaw(str)
@@ -153,19 +144,10 @@ function OutputPipe:_writeRaw(str)
         lwp.ByteBlock_setOffset(self.buffer, done)
         local result = lwp.WriteFile(self.fileHandle, self.buffer, len - done, self.dwPointer, nil)
         if not result then
-            return false
+            error(errors.ERROR_PIPE)
         end
         done = done + lwp.ByteBlock_getDWORD(self.dwPointer)
     end
-    return true
-end
-
-function OutputPipe._tableSize(table)
-    local size = 0
-    for _ in pairs(table) do
-        size = size + 1
-    end
-    return size
 end
 
 return OutputPipe
