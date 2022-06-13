@@ -136,6 +136,7 @@ function OutputPipe:_writeDouble(number)
 end
 
 function OutputPipe:_writeFunction(func)
+    assert(self.localFunctions, "can't send function without ingoing calls endpoint")
     local funcId = self.localFunctions:getId(func)
     local objMask = types.intMask(funcId)
     local objType = types.composeType(types.CLASS_FUNCTION, objMask)

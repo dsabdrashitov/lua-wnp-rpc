@@ -10,18 +10,22 @@ local wnprpc = require("out.production.lua-wnp-rpc.lua-wnp-rpc")
 -- Restore path
 package.path = prev_path
 
-FILE_FUNCIN = "tmp\\funcin.txt"
-FILE_FUNCOUT = "tmp\\funcout.txt"
+FILE_FUNCIN_ROOT = "tmp\\funcin_root.txt"
+FILE_FUNCOUT_ROOT = "tmp\\funcout_root.txt"
+FILE_FUNCIN_MAIN = "tmp\\funcin_main.txt"
+FILE_FUNCOUT_MAIN = "tmp\\funcout_main.txt"
 
 function main()
-    write_calls()
-    execute_test()
-    read_replies()
+    write_root_call()
+    execute(FILE_FUNCIN_ROOT, FILE_FUNCOUT_ROOT, 1)
+    read_root_replies()
+    execute(FILE_FUNCIN_MAIN, FILE_FUNCOUT_MAIN, 3)
+    read_main_replies()
 end
 
-function write_calls()
+function write_root_call()
     local outFile = lwp.CreateFile(
-            FILE_FUNCIN,
+            FILE_FUNCIN_ROOT,
             lwp.mask(lwp.GENERIC_WRITE),
             lwp.FILE_NO_SHARE,
             nil,
@@ -39,17 +43,15 @@ function write_calls()
 
     local out = wnprpc.OutgoingCalls:new(nil, outFile)
 
-    out:_sendCall(0, false, nil, "error1")
-    out:_sendCall(0, false, "error2", nil)
-    out:_sendCall(0, true, "error3", nil, "something")
+    out:_sendCall(0)
 
     print("Closing.")
     close(outFile)
 end
 
-function execute_test()
+function execute(inputName, outputName, count)
     local outFile = lwp.CreateFile(
-            FILE_FUNCOUT,
+            outputName,
             lwp.mask(lwp.GENERIC_WRITE),
             lwp.FILE_NO_SHARE,
             nil,
@@ -66,7 +68,7 @@ function execute_test()
     end
 
     local inFile = lwp.CreateFile(
-            FILE_FUNCIN,
+            inputName,
             lwp.mask(lwp.GENERIC_READ),
             lwp.FILE_NO_SHARE,
             nil,
@@ -82,19 +84,84 @@ function execute_test()
         print("Opened.")
     end
 
-    local ingoing = wnprpc.IngoingCalls:new(inFile, outFile, assert)
-    ingoing:receiveCall()
-    ingoing:receiveCall()
-    ingoing:receiveCall()
+    local ingoing = wnprpc.IngoingCalls:new(inFile, outFile, function()
+        return {
+            ["print"] = print,
+            ["assert"] = assert,
+        }
+    end)
+    print("print.id=" .. tostring(ingoing.localFunctions:getId(print)))
+    print("assert.id=" .. tostring(ingoing.localFunctions:getId(assert)))
+
+    for _ = 1, count do
+        ingoing:receiveCall()
+    end
 
     print("Closing.")
     close(inFile)
     close(outFile)
 end
 
-function read_replies()
+function read_root_replies()
     local inFile = lwp.CreateFile(
-            FILE_FUNCOUT,
+            FILE_FUNCOUT_ROOT,
+            lwp.mask(lwp.GENERIC_READ),
+            lwp.FILE_NO_SHARE,
+            nil,
+            lwp.OPEN_EXISTING,
+            lwp.FILE_ATTRIBUTE_DEFAULT,
+            nil
+    )
+    if (inFile == lwp.INVALID_HANDLE_VALUE) then
+        print("Error: invalid handle")
+        print(tostring(lwp.GetLastError()))
+        return
+    else
+        print("Opened.")
+    end
+
+    local outFile = lwp.CreateFile(
+            FILE_FUNCIN_MAIN,
+            lwp.mask(lwp.GENERIC_WRITE),
+            lwp.FILE_NO_SHARE,
+            nil,
+            lwp.CREATE_ALWAYS,
+            lwp.FILE_ATTRIBUTE_DEFAULT,
+            nil
+    )
+    if (outFile == lwp.INVALID_HANDLE_VALUE) then
+        print("Error: invalid handle")
+        print(tostring(lwp.GetLastError()))
+        return
+    else
+        print("Created.")
+    end
+
+    local out = wnprpc.OutgoingCalls:new(inFile, outFile)
+    
+    local g = out:_receiveReply()
+
+    out:_sendCall(findId(g["print"], out), "hello", 3333, true, nil, 366.239, {a=1})
+    out:_sendCall(findId(g["assert"], out), false, "error1")
+    out:_sendCall(findId(g["assert"], out), true, "error2", nil, 42)
+
+    print("Closing.")
+    close(inFile)
+    close(outFile)
+end
+
+function findId(func, out)
+    for k, v in pairs(out.remoteFunctions.id2function) do
+        if v == func then
+            return k
+        end
+    end
+    return nil
+end
+
+function read_main_replies()
+    local inFile = lwp.CreateFile(
+            FILE_FUNCOUT_MAIN,
             lwp.mask(lwp.GENERIC_READ),
             lwp.FILE_NO_SHARE,
             nil,
@@ -112,9 +179,9 @@ function read_replies()
 
     local out = wnprpc.OutgoingCalls:new(inFile, nil)
 
-    print_output(pcall(function() return out:_receiveReply() end))
-    print_output(pcall(function() return out:_receiveReply() end))
-    print_output(pcall(function() return out:_receiveReply() end))
+    print_output(pcall(out._receiveReply, out))
+    print_output(pcall(out._receiveReply, out))
+    print_output(pcall(out._receiveReply, out))
 
     print("Closing.")
     close(inFile)

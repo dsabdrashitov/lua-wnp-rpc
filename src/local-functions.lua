@@ -31,6 +31,7 @@ function LocalFunctions:getId(func)
     if not self.function2id[func] then
         self.registered = self.registered + 1
         self.function2id[func] = self.registered
+        self.id2function[self.registered] = func
     end
     return self.function2id[func]
 end

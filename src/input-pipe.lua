@@ -22,6 +22,7 @@ function InputPipe:_init(fileHandle)
     self.bufferSize = 8
     self.buffer = lwp.ByteBlock_alloc(self.bufferSize)
     self.dwPointer = lwp.ByteBlock_alloc(lwp.SIZEOF_DWORD)
+    self.remoteFunctions = nil
 end
 
 function InputPipe:setRemoteFunctions(remoteFunctions)
@@ -112,6 +113,7 @@ function InputPipe:_readFloat(mask)
 end
 
 function InputPipe:_readFunction(mask)
+    assert(self.remoteFunctions, errors.ERROR_PROTOCOL)
     local funcId = self:_readInt(mask)
     local result = self.remoteFunctions:getFunction(funcId)
     return result
