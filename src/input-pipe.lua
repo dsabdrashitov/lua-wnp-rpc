@@ -22,6 +22,11 @@ function InputPipe:_init(fileHandle)
     self.bufferSize = 8
     self.buffer = lwp.ByteBlock_alloc(self.bufferSize)
     self.dwPointer = lwp.ByteBlock_alloc(lwp.SIZEOF_DWORD)
+    self.remoteFunctions = nil
+end
+
+function InputPipe:setRemoteFunctions(remoteFunctions)
+    self.remoteFunctions = remoteFunctions
 end
 
 function InputPipe:read()
@@ -43,6 +48,7 @@ function InputPipe:_read(stored_objects)
         [types.CLASS_STRING] = InputPipe._readString,
         [types.CLASS_TABLE] = InputPipe._readTable,
         [types.CLASS_LINK] = InputPipe._readLink,
+        [types.CLASS_FUNCTION] = InputPipe._readFunction,
     }
     local read_method = class_switch[objClass]
     if not read_method then
@@ -103,6 +109,13 @@ function InputPipe:_readFloat(mask)
     local bytes = types.maskBytes(mask)
     local str = self:_readRaw(bytes)
     local result = types.deserializeFloat(str, mask)
+    return result
+end
+
+function InputPipe:_readFunction(mask)
+    assert(self.remoteFunctions, errors.ERROR_PROTOCOL)
+    local funcId = self:_readInt(mask)
+    local result = self.remoteFunctions:getFunction(funcId)
     return result
 end
 

@@ -23,6 +23,11 @@ function OutputPipe:_init(fileHandle)
     self.bufferSize = 8
     self.buffer = lwp.ByteBlock_alloc(self.bufferSize)
     self.dwPointer = lwp.ByteBlock_alloc(lwp.SIZEOF_DWORD)
+    self.localFunctions = nil
+end
+
+function OutputPipe:setLocalFunctions(localFunctions)
+    self.localFunctions = localFunctions
 end
 
 function OutputPipe:write(obj)
@@ -38,6 +43,7 @@ function OutputPipe:_write(obj, stored_objects)
         ["nil"] = OutputPipe._writeNil,
         ["number"] = OutputPipe._writeNumber,
         ["table"] = OutputPipe._writeTable,
+        ["function"] = OutputPipe._writeFunction,
     }
     local write_method = type_switch[type(obj)]
     assert(write_method, string.format("error: unsupported type (%s)", type(obj)))
@@ -125,6 +131,16 @@ end
 function OutputPipe:_writeDouble(number)
     local objType = types.composeType(types.CLASS_FLOAT, types.MASK_FLOAT64)
     local header = string.char(objType) .. types.serializeFloat(number, types.MASK_FLOAT64)
+
+    self:_writeRaw(header)
+end
+
+function OutputPipe:_writeFunction(func)
+    assert(self.localFunctions, "can't send function without ingoing calls endpoint")
+    local funcId = self.localFunctions:getId(func)
+    local objMask = types.intMask(funcId)
+    local objType = types.composeType(types.CLASS_FUNCTION, objMask)
+    local header = string.char(objType) .. types.serializeInt(funcId, objMask)
 
     self:_writeRaw(header)
 end
