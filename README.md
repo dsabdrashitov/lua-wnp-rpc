@@ -4,4 +4,3 @@ RPC for Lua over windows named pipes
 Goal: make Lua <-> python RPC over NamedPipe
 
 Current status: Implemented receiving of ingoing calls and making outgoing calls.
-Limited to only one root function. Transfer of remote functions is not implemented yet.
