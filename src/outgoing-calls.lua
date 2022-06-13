@@ -21,6 +21,10 @@ function OutgoingCalls:_init(inputPipe, outputPipe)
     self.outputPipe = outputPipe
 end
 
+function OutgoingCalls:setLocalFunctions(localFunctions)
+    self.outputPipe:setLocalFunctions(localFunctions)
+end
+
 function OutgoingCalls:rootCall()
     return self:_call(0)
 end
