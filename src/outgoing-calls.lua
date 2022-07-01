@@ -12,17 +12,37 @@ function OutgoingCalls:_setClass(obj)
     setmetatable(obj, self)
 end
 
-function OutgoingCalls:new(inputHandle, outputHandle)
+function OutgoingCalls:new(inputHandle, outputHandle, onConnectionError)
     local obj = {}
     self:_setClass(obj)
-    obj:_init(inputHandle, outputHandle)
+    obj:_init(inputHandle, outputHandle, onConnectionError)
     return obj
 end
 
-function OutgoingCalls:_init(inputHandle, outputHandle)
+function OutgoingCalls:_init(inputHandle, outputHandle, onConnectionError)
     self.inputPipe = InputPipe:new(inputHandle)
     self.outputPipe = OutputPipe:new(outputHandle)
-    self.remoteFunctions = RemoteFunctions:new(self)
+
+    local functionBuilder = function(funcId)
+        local result = function(...)
+            local rets = {pcall(self._call, self, funcId, ...)}
+            local ok = rets[1]
+            if ok then
+                local retsSize = utils.lastIndex(rets)
+                return table.unpack(rets, 2, retsSize)
+            end
+            local err = rets[2]
+            if (err == errors.ERROR_PROTOCOL) or (err == errors.ERROR_PIPE) then
+                if onConnectionError then
+                    return onConnectionError(err)
+                end
+            end
+            error(err)
+        end
+        return result
+    end
+    self.remoteFunctions = RemoteFunctions:new(functionBuilder)
+
     self.inputPipe:setRemoteFunctions(self.remoteFunctions)
 end
 
@@ -35,7 +55,6 @@ function OutgoingCalls:rootCall(...)
 end
 
 function OutgoingCalls:_call(remoteId, ...)
-    --TODO: catch errors and report
     self:_sendCall(remoteId, ...)
     return self:_receiveReply()
 end
