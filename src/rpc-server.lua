@@ -1,7 +1,7 @@
 local RPCServer = {}
 
 local lwp = require("lib.lua-win-pipe-v_1_1.lua-win-pipe")
-local IngoingCalls = require("ingoing-calls")
+local DuplexCalls = require("duplex-calls")
 local errors = require("errors")
 
 RPCServer.PIPE_NAME_FORMAT = "\\\\.\\pipe\\%s"
@@ -51,7 +51,11 @@ function RPCServer:_init(name, rootFunction)
         return
     end
 
-    self.ingoingCalls = IngoingCalls:new(self.pipe, self.pipe, rootFunction)
+    local processError = function(err)
+        self:close()
+        error(err)
+    end
+    self.calls = DuplexCalls:new(self.pipe, self.pipe, rootFunction, processError)
 end
 
 function RPCServer:active()
@@ -59,7 +63,7 @@ function RPCServer:active()
 end
 
 function RPCServer:close()
-    self.ingoingCalls = nil
+    self.calls = nil
     if self.pipe ~= nil then
         -- return of CloseHandle can be false, but since this server is closing there is no sense in handling error
         lwp.CloseHandle(self.pipe)
@@ -67,19 +71,11 @@ function RPCServer:close()
     end
 end
 
-function RPCServer:receiveCall()
-    if self.pipe == nil then
+function RPCServer:processCall()
+    if not self:active() then
         return false
     end
-    local ok, err = pcall(self.ingoingCalls.receiveCall, self.ingoingCalls)
-    if not ok then
-        if err == errors.ERROR_PIPE or err == errors.ERROR_PROTOCOL then
-            self:close()
-            return false
-        else
-            error(err)
-        end
-    end
+    self.calls:processCall()
     return true
 end
 
