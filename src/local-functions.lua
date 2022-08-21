@@ -27,7 +27,6 @@ function LocalFunctions:getFunction(funcId)
 end
 
 function LocalFunctions:getId(func)
-    --TODO: add synchronization to all methods (LUA is single-threaded, but with dirty hacks it can be multi-threaded)
     if not self.function2id[func] then
         self.registered = self.registered + 1
         self.function2id[func] = self.registered
