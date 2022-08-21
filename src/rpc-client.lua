@@ -2,7 +2,7 @@ local RPCClient = {}
 
 local lwp = require("lib.lua-win-pipe-v_1_1.lua-win-pipe")
 local RPCServer = require("rpc-server")
-local OutgoingCalls = require("outgoing-calls")
+local DuplexCalls = require("duplex-calls")
 
 RPCClient._WAIT_TIMEOUT_MS = 15000
 
@@ -42,11 +42,11 @@ function RPCClient:_init(name)
         return
     end
 
-    local onConnectionError = function(err)
+    local processError = function(err)
         self:close()
         error(err)
     end
-    self.outgoingCalls = OutgoingCalls:new(self.pipe, self.pipe, onConnectionError)
+    self.calls = DuplexCalls:new(self.pipe, self.pipe, nil, processError)
 end
 
 function RPCClient:active()
@@ -54,7 +54,7 @@ function RPCClient:active()
 end
 
 function RPCClient:close()
-    self.outgoingCalls = nil
+    self.calls = nil
     if self.pipe ~= nil then
         lwp.CloseHandle(self.pipe)
         self.pipe = nil
@@ -62,7 +62,7 @@ function RPCClient:close()
 end
 
 function RPCClient:rootCall(...)
-    return self.outgoingCalls:rootCall(...)
+    return self.calls:callRemoteRoot(...)
 end
 
 return RPCClient
