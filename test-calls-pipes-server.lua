@@ -17,7 +17,7 @@ function main()
     local server = wnprpc.RPCServer:new(PIPE_NAME, rootFunc)
 
     while running and server:active() do
-        server:receiveCall()
+        server:processCall()
     end
 
     server:close()

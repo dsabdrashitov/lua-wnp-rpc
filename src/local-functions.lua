@@ -1,7 +1,5 @@
 local LocalFunctions = {}
 
-local lwcs = require("lib.lua-win-critical-section-v_1_0.lua-win-critical-section")
-
 LocalFunctions.__index = LocalFunctions
 
 function LocalFunctions:_setClass(obj)
@@ -16,8 +14,12 @@ function LocalFunctions:new(rootFunction)
 end
 
 function LocalFunctions:_init(rootFunction)
-    self.function2id = {[rootFunction] = 0}
-    self.id2function = {[0] = rootFunction}
+    self.function2id = {}
+    self.id2function = {}
+    if rootFunction ~= nil then
+        self.function2id[rootFunction] = 0
+        self.id2function[0] = rootFunction
+    end
     self.registered = 0
 end
 
