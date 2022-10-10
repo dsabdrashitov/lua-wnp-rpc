@@ -33,6 +33,15 @@ function InputPipe:read()
     return self:_read({count = 0})
 end
 
+function InputPipe:empty()
+    local ok = lwp.PeekNamedPipe(self.fileHandle, nil, 0, nil, self.dwPointer, nil)
+    if not ok then
+        error(errors.ERROR_PIPE)
+    end
+    local totalBytesAvailable = lwp.ByteBlock_getDWORD(self.dwPointer)
+    return totalBytesAvailable == 0
+end
+
 local class_switch
 
 function InputPipe:_read(stored_objects)

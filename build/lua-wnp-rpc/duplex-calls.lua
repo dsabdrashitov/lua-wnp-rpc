@@ -43,6 +43,10 @@ function DuplexCalls:processCall()
     self:__pcall(self._receiveRequest, self)
 end
 
+function DuplexCalls:empty()
+    return self:__pcall(self._empty, self)
+end
+
 function DuplexCalls:_makeCall(funcId, ...)
     self:__pcall(self._sendRequest, self, funcId, ...)
     return self:__pcall(self._receiveReply, self)
@@ -98,6 +102,10 @@ function DuplexCalls:_receiveReply()
         end
         ::continue::
     end
+end
+
+function DuplexCalls:_empty()
+    return self.inputPipe:empty()
 end
 
 function DuplexCalls:_receiveRequest()

@@ -75,6 +75,9 @@ function RPCServer:processCall()
     if not self:active() then
         return false
     end
+    if self.calls:empty() then
+        return false
+    end
     self.calls:processCall()
     return true
 end

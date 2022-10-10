@@ -4,7 +4,7 @@ local root_path = debug.getinfo(1).source:match("@(.*\\)") or ""
 package.path = root_path .. "?.lua"
 
 -- imports and libs
-local wnprpc = require("build.lua-wnp-rpc-v_1_1.lua-wnp-rpc")
+local wnprpc = require("build.lua-wnp-rpc.lua-wnp-rpc")
 
 -- Restore path
 package.path = prev_path
@@ -41,7 +41,10 @@ function main()
     local server = wnprpc.RPCServer:new(NAME, root_func)
 
     while running do
-        server:processCall()
+        if not server:processCall() then
+            -- it's good idea to place some kind of sleep here instead of print
+            print("Empty pipe. Skip loop iteration.")
+        end
     end
 
     print("Closing.")
