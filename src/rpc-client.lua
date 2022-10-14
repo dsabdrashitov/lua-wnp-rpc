@@ -4,7 +4,7 @@ local lwp = require("lib.lua-win-pipe-v_1_1.lua-win-pipe")
 local RPCServer = require("rpc-server")
 local DuplexCalls = require("duplex-calls")
 
-RPCClient._WAIT_TIMEOUT_MS = 15000
+RPCClient._WAIT_TIMEOUT_MS = 0
 
 RPCClient.__index = RPCClient
 
@@ -21,6 +21,7 @@ end
 
 function RPCClient:_init(name)
     local pipeName = RPCServer:pipeAddress(name)
+
     local ret = lwp.WaitNamedPipe(pipeName, self._WAIT_TIMEOUT_MS)
     if not ret then
         self.pipe = nil
