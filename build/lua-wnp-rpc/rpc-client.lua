@@ -4,7 +4,7 @@ local lwp = require("lib.lua-win-pipe-v_1_1.lua-win-pipe")
 local RPCServer = require("rpc-server")
 local DuplexCalls = require("duplex-calls")
 
-RPCClient._WAIT_TIMEOUT_MS = 0
+RPCClient._WAIT_TIMEOUT_MS = 1
 
 RPCClient.__index = RPCClient
 
