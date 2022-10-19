@@ -1,8 +1,7 @@
 local RPCServer = {}
 
 local lwp = require("lib.lua-win-pipe-v_1_1.lua-win-pipe")
-local DuplexCalls = require("duplex-calls")
-local errors = require("errors")
+local DuplexCallsServer = require("duplex-calls-server")
 
 RPCServer.PIPE_NAME_FORMAT = "\\\\.\\pipe\\%s"
 
@@ -55,7 +54,7 @@ function RPCServer:_init(name, rootFunction)
         self:close()
         error(err)
     end
-    self.calls = DuplexCalls:new(self.pipe, self.pipe, rootFunction, processError)
+    self.calls = DuplexCallsServer:new(self.pipe, self.pipe, rootFunction, processError)
 end
 
 function RPCServer:active()

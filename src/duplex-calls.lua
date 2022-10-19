@@ -9,16 +9,7 @@ local errors = require("errors")
 
 DuplexCalls.__index = DuplexCalls
 
-function DuplexCalls:_setClass(obj)
-    setmetatable(obj, self)
-end
-
-function DuplexCalls:new(inputHandle, outputHandle, rootFunction, processErrorFunction)
-    local obj = {}
-    self:_setClass(obj)
-    obj:_init(inputHandle, outputHandle, rootFunction, processErrorFunction)
-    return obj
-end
+-- Abstract class. Can't be instantiated, so there is no :new function.
 
 function DuplexCalls:_init(inputHandle, outputHandle, rootFunction, processErrorFunction)
     self.inputPipe = InputPipe:new(inputHandle)
@@ -33,18 +24,6 @@ function DuplexCalls:_init(inputHandle, outputHandle, rootFunction, processError
     end
     self.remoteFunctions = RemoteFunctions:new(makeCall)
     self.inputPipe:setRemoteFunctions(self.remoteFunctions)
-end
-
-function DuplexCalls:callRemoteRoot(...)
-    return self:_makeCall(0, ...)
-end
-
-function DuplexCalls:processCall()
-    self:__pcall(self._receiveRequest, self)
-end
-
-function DuplexCalls:empty()
-    return self:__pcall(self._empty, self)
 end
 
 function DuplexCalls:_makeCall(funcId, ...)
