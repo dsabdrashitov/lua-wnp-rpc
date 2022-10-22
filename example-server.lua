@@ -27,6 +27,9 @@ function main()
         print("Called print.")
         return print(...)
     end
+    local func_echo = function(...)
+        return ...
+    end
 
     local root_func = function(pwd)
         if pwd ~= "password" then
@@ -36,6 +39,7 @@ function main()
             ["stop"] = func_stop,
             ["print"] = func_print,
             ["error"] = func_error,
+            ["echo"] = func_echo,
         }
     end
     local server = wnprpc.RPCServer:new(NAME, root_func)

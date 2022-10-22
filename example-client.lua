@@ -28,6 +28,7 @@ function main()
     local func_print = func_dict["print"]
     local func_error = func_dict["error"]
     local func_stop = func_dict["stop"]
+    local func_echo = func_dict["echo"]
 
     func_print(1, false, nil, 3.66, {["a"] = "b"})
 
@@ -37,6 +38,8 @@ function main()
     else
         print_table("pcall(error)", call_result)
     end
+
+    print_table("echo", {func_echo("a", nil, false, {1, 2, 3})})
 
     func_stop()
 
@@ -48,7 +51,11 @@ function print_table(name, table)
     print(name .. ":")
     for k, v in pairs(table) do
         print(tostring(k) .. " = " .. tostring(v))
+        if type(v) == "table" then
+            print_table(tostring(v), v)
+        end
     end
+    print(name .. " end")
 end
 
 main()

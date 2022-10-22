@@ -20,7 +20,7 @@ function DuplexCalls:_init(inputHandle, outputHandle, rootFunction, processError
 
     self.processErrorFunction = processErrorFunction
     local makeCall = function(funcId, ...)
-        self:_makeCall(funcId, ...)
+        return self:_makeCall(funcId, ...)
     end
     self.remoteFunctions = RemoteFunctions:new(makeCall)
     self.inputPipe:setRemoteFunctions(self.remoteFunctions)
