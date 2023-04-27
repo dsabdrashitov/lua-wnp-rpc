@@ -81,4 +81,13 @@ function RPCServer:processCall()
     return true
 end
 
+-- same as processCall, but blocks if pipe is empty and waits for incoming call
+function RPCServer:processCallSync()
+    if not self:active() then
+        return false
+    end
+    self.calls:processCall()
+    return true
+end
+
 return RPCServer
