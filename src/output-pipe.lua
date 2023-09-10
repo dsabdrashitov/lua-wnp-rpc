@@ -1,6 +1,6 @@
 local OutputPipe = {}
 
-local lwp = require("lib.lua-win-pipe-v_1_1.lua-win-pipe")
+local lwp = require("lib.lua-win-pipe-v_1_1-lua54-win64.lua-win-pipe")
 local types = require("types")
 local errors = require("errors")
 local utils = require("utils")

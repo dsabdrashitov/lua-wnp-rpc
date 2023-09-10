@@ -4,7 +4,7 @@ local root_path = debug.getinfo(1).source:match("@(.*\\)") or ""
 package.path = root_path .. "?.lua"
 
 -- imports and libs
-local wnprpc = require("build.lua-wnp-rpc-v_1_3.lua-wnp-rpc")
+local wnprpc = require("build.lua-wnp-rpc-v_1_3-lua54-win64.lua-wnp-rpc")
 
 -- Restore path
 package.path = prev_path

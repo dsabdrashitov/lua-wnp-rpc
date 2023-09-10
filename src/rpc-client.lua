@@ -1,6 +1,6 @@
 local RPCClient = {}
 
-local lwp = require("lib.lua-win-pipe-v_1_1.lua-win-pipe")
+local lwp = require("lib.lua-win-pipe-v_1_1-lua54-win64.lua-win-pipe")
 local RPCServer = require("rpc-server")
 local DuplexCallsClient = require("duplex-calls-client")
 
